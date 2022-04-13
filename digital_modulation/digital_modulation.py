@@ -16,12 +16,33 @@ class Modulation():
     self.rs = rs
     self.ts = 1/rs
 
-  # Differentiate for binary or bit pairs
-  def differential(self, quartenary=False):
-    if (quartenary is True): # quartenary encoded
-      pass
-    else: # binary encoded
-      pass
+    self.setup_timeaxis()
+    self.generate_carrier_signal()
+ 
+  # Initialize time axis based on resolution, carrier frequency, and data rate
+  def setup_timeaxis(self):
+    self.cycles_per_symbol = self.fc/self.rs
+    stop = self.cycles_per_symbol*self.tc*self.data_len
+    step = self.tc / self.RESOLUTION
+    self.x = np.arange(0, stop, step)
+
+  def generate_carrier_signal(self):
+    self.carrier_signal = np.sin(2*np.pi*self.fc*self.x)
+
+  # Time stretch base band signal
+  def timescale_base_band_signal(self):
+    base_band_signal = []
+    for data in self.data:
+      if data == "0" or data == "11": amp = 0
+      elif data == "1" or data == "10": amp = 1
+      elif data == "00": amp = 2 # quartenary encoded signals are extended
+      elif data == "01": amp = 3
+      else: amp = -1 # Error state
+
+      base_band_signal = np.append(base_band_signal,
+                                   np.full(int(self.cycles_per_symbol * self.RESOLUTION), fill_value=amp))
+
+    self.base_band_signal = base_band_signal
   
   # Repackage data into bit pairs dtype string
   def pair_bits(self):
@@ -35,31 +56,17 @@ class Modulation():
 
     self.data = np.asarray(paired_bits)
     self.data_len = len(self.data)
- 
-  # Time stretch base band signal
-  def timescale_base_band_signal(self):
-    base_band_signal = []
-    for data in self.data:
-      if data == "0" or data == "00": amp = 0
-      elif data == "1" or data == "11": amp = 1
-      elif data == "01": amp = 2
-      elif data == "10": amp = 3
 
-      base_band_signal = np.append(base_band_signal,
-                                   np.full(int(self.cycles_per_symbol * self.RESOLUTION), fill_value=amp))
-
-    self.base_band_signal = base_band_signal
-      
-  # Initialize time axis based on resolution, carrier frequency, and data rate
-  def setup_timeaxis(self):
-    self.cycles_per_symbol = self.fc/self.rs
-    stop = self.cycles_per_symbol*self.tc*self.data_len
-    step = self.tc / self.RESOLUTION
-    self.x = np.arange(0, stop, step)
+  # Differentiate for binary or bit pairs
+  def differential(self, quartenary=False):
+    if (quartenary is True): # quartenary encoded
+      pass
+    else: # binary encoded
+      pass
 
   # Amplitude shift keying
   def ask(self):
-    pass
+    self.modulated_signal = [self.base_band_signal[i] * self.carrier_signal[i] for i in range(len(self.base_band_signal))]
 
   # Frequency shift keying
   def fsk(self):
@@ -81,15 +88,19 @@ class Modulation():
   def dqpsk(self):
     pass
 
+  def plot(self):
+    plt.plot(self.modulated_signal)
+    plt.show()
+    plt.clf()
+
 
 #------------------------Debug------------------------
 def main():
-  mod = Modulation("qpsk", "11010", 150E3, 25E3)
-  mod.pair_bits()  
+  mod = Modulation("ask", "11010", 150E3, 25E3)
   mod.setup_timeaxis()
   mod.timescale_base_band_signal()
-  print(len(mod.x))
-  print(len(mod.base_band_signal))
+  mod.ask()
+  mod.plot()
 
 
 if __name__ == "__main__": main()
