@@ -6,19 +6,19 @@ class Modulation():
 
   # Constructor
   # Input data string is expected in binary
-  def __init__(self, modulation_technique, data, fc, rs):
-    self.modulation_technique = modulation_technique
+  def __init__(self, modulation_technique, data, fc, rs, fc_offset=0):
+    self.modulation_technique = modulation_technique.upper()
     self.data = np.asanyarray(list(data))
     self.data_len = len(self.data)
 
+    self.fc_offset = fc_offset
     self.fc = fc
     self.tc = 1/fc
     self.rs = rs
     self.ts = 1/rs
 
     self.setup_timeaxis()
-    self.generate_carrier_signal()
- 
+
   # Initialize time axis based on resolution, carrier frequency, and data rate
   def setup_timeaxis(self):
     self.cycles_per_symbol = self.fc/self.rs
@@ -26,8 +26,8 @@ class Modulation():
     step = self.tc / self.RESOLUTION
     self.x = np.arange(0, stop, step)
 
-  def generate_carrier_signal(self):
-    self.carrier_signal = np.sin(2*np.pi*self.fc*self.x)
+  def generate_carrier_signal(self, fc):
+    self.carrier_signal = np.sin(2*np.pi*fc*self.x)
 
   # Time stretch base band signal
   def timescale_base_band_signal(self):
@@ -37,7 +37,7 @@ class Modulation():
       elif data == "1" or data == "10": amp = 1
       elif data == "00": amp = 2 # quartenary encoded signals are extended
       elif data == "01": amp = 3
-      else: amp = -1 # Error state
+      else: amp = -1 # Used for PSK
 
       base_band_signal = np.append(base_band_signal,
                                    np.full(int(self.cycles_per_symbol * self.RESOLUTION), fill_value=amp))
@@ -66,19 +66,51 @@ class Modulation():
 
   # Amplitude shift keying
   def ask(self):
+    self.generate_carrier_signal(fc=self.fc)
+    self.timescale_base_band_signal()
     self.modulated_signal = [self.base_band_signal[i] * self.carrier_signal[i] for i in range(len(self.base_band_signal))]
+
 
   # Frequency shift keying
   def fsk(self):
-    pass
+    self.generate_carrier_signal(fc=self.fc + self.fc_offset)
+    self.timescale_base_band_signal()
+    fc_upper = [self.base_band_signal[i] * self.carrier_signal[i] for i in range(len(self.base_band_signal))]
+
+    for i in range(0, self.data_len, 1):
+      self.data[i] = "0" if self.data[i] == "1" else "1"
+
+    self.generate_carrier_signal(fc=self.fc - self.fc_offset)
+    self.timescale_base_band_signal()
+    fc_lower = [self.base_band_signal[i] * self.carrier_signal[i] for i in range(len(self.base_band_signal))]
+
+    self.modulated_signal = [fc_upper[i] + fc_lower[i] for i in range(len(fc_upper))]
   
-  # Phase shift keying
+  # Binary phase shift keying
   def psk(self):
-    pass
+    self.generate_carrier_signal(fc=self.fc)
+
+    for i in range(0, self.data_len, 1):
+      self.data[i] = "-1" if self.data[i] == "0" else "1"
+
+    self.timescale_base_band_signal()
+    self.modulated_signal = [self.base_band_signal[i] * self.carrier_signal[i] for i in range(len(self.base_band_signal))]
+
+
 
   # Quaternary phase shift keying  
   def qpsk(self):
-    pass
+    self.pair_bits()
+    self.generate_carrier_signal(fc=self.fc)
+    self.timescale_base_band_signal()
+    
+    self.modulated_signal = []
+    for i in range(0, len(self.base_band_signal), 1):
+      if self.base_band_signal[i] == 0: self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] +  np.pi/4)]
+      if self.base_band_signal[i] == 1: self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + 3*np.pi/4)]
+      if self.base_band_signal[i] == 2: self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + 5*np.pi/4)]
+      if self.base_band_signal[i] == 3: self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + 7*np.pi/4)]
+
 
   # Differential phase shift keying
   def dpsk(self):
@@ -96,10 +128,8 @@ class Modulation():
 
 #------------------------Debug------------------------
 def main():
-  mod = Modulation("ask", "11010", 150E3, 25E3)
-  mod.setup_timeaxis()
-  mod.timescale_base_band_signal()
-  mod.ask()
+  mod = Modulation(modulation_technique="fsk", data="11010", fc=500E3, rs=25E3, fc_offset=100E3)
+  mod.qpsk()
   mod.plot()
 
 
