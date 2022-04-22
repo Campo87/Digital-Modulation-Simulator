@@ -47,22 +47,39 @@ class Modulation():
   # Repackage data into bit pairs dtype string
   def pair_bits(self):
     # Make data stream even if odd number of bits
-    if (self.data_len % 2 is 1):
+    if (self.data_len % 2 == 1):
       self.data = np.append(self.data, self.data[-1])
 
-    paired_bits = []
+    paired_bits = np.array([])
     for i in range(0, self.data_len, 2):
-      paired_bits.append(f"{self.data[i]}{self.data[i+1]}")
+      paired_bits = np.append(paired_bits, f"{self.data[i]}{self.data[i+1]}")
 
-    self.data = np.asarray(paired_bits)
+    self.data = paired_bits
     self.data_len = len(self.data)
 
   # Differentiate for binary or bit pairs
-  def differential(self, quartenary=False):
-    if (quartenary is True): # quartenary encoded
-      pass
+  def phase_differentiate(self, quartenary=False):
+    if (quartenary == True): # quartenary encoded
+      self.data = np.insert(self.data, 0, "45")
+      self.data_len += 1
+
+      for i in range(1, self.data_len, 1):
+        previous_symbol_phase = int(self.data[i-1])
+        if  (self.data[i] == "11"): self.data[i] = previous_symbol_phase
+        elif(self.data[i] == "10"): self.data[i] = (previous_symbol_phase + 90) % 360
+        elif(self.data[i] == "00"): self.data[i] = (previous_symbol_phase + 180) % 360
+        elif(self.data[i] == "01"): self.data[i] = (previous_symbol_phase + 270) % 360
+
     else: # binary encoded
-      pass
+      # Initial data
+      self.data = np.insert(self.data, 0, "0")
+      # 0 - 0 deg offset
+      # 1 - 180 deg offset
+      for i in range(1, self.data_len, 1):
+        if(self.data[i] == "1"):
+          self.data[i] = self.data[i-1]
+        elif(self.data[i] == "0"):
+          self.data[i] = "1" if self.data[i-1] == "0" else "0"
 
   # Amplitude shift keying
   def ask(self):
@@ -128,9 +145,9 @@ class Modulation():
 
 #------------------------Debug------------------------
 def main():
-  mod = Modulation(modulation_technique="fsk", data="11010", fc=500E3, rs=25E3, fc_offset=100E3)
-  mod.qpsk()
-  mod.plot()
-
+  mod = Modulation(modulation_technique="fsk", data="111000101100", fc=500E3, rs=25E3, fc_offset=100E3)
+  mod.pair_bits()
+  mod.differential(quartenary=True)
+  print(mod.data)
 
 if __name__ == "__main__": main()
