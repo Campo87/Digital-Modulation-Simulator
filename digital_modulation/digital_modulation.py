@@ -5,8 +5,11 @@
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+
+from matplotlib.ticker import EngFormatter 
 # ---------------------------------------------------------------------------
 
 class Digital_Modulation():
@@ -250,10 +253,23 @@ class Digital_Modulation():
     plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
     integral multiplies of each other, you will get mismatched shape errors in the plot function.
     """
-    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rb={self.rb}kHz")
+     # Format data rate to symbols/second for quadrature
+    eng_formatter_freq = EngFormatter(unit="Hz") # Engineering notation for Hz
+    if self.quadrature == True:
+      data_rate = f"Symbol Rate={eng_formatter_freq.format_eng(self.rb/2)}"
+    else:
+      data_rate = f"Bit Rate={eng_formatter_freq.format_eng(self.rb)}"
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(self.x, self.modulated_signal)
+
+    eng_formatter_time = EngFormatter(unit="s") # Set engineering notation formatter for time
+    fig.get_axes()[0].xaxis.set_major_formatter(eng_formatter_time)
+
+    plt.title(f"{self.modulation_technique} Modulation, Carrier Freq={eng_formatter_freq.format_eng(self.fc)}Hz, {data_rate}Hz")
     plt.ylabel("Amplitude (Volts)")
     plt.xlabel("Time(s)")
-    plt.plot(self.x, self.modulated_signal)
     for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
       plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
     plt.show()
