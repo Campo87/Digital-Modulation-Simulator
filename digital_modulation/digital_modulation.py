@@ -267,9 +267,10 @@ class Digital_Modulation():
     eng_formatter_time = EngFormatter(unit="s") # Set engineering notation formatter for time
     fig.get_axes()[0].xaxis.set_major_formatter(eng_formatter_time)
 
+    eng_formatter_amp = EngFormatter(unit="V") # Set engineering notation formatter for time
+    fig.get_axes()[0].yaxis.set_major_formatter(eng_formatter_amp)
+
     plt.title(f"{self.modulation_technique} Modulation, Carrier Freq={eng_formatter_freq.format_eng(self.fc)}Hz, {data_rate}Hz")
-    plt.ylabel("Amplitude (Volts)")
-    plt.xlabel("Time(s)")
     for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
       plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
     plt.show()
