@@ -5,8 +5,6 @@
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
-from calendar import different_locale
-from cv2 import phase
 import numpy as np
 import matplotlib.pyplot as plt
 # ---------------------------------------------------------------------------
