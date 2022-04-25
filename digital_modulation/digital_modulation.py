@@ -5,6 +5,8 @@
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
+from calendar import different_locale
+from cv2 import phase
 import numpy as np
 import matplotlib.pyplot as plt
 # ---------------------------------------------------------------------------
@@ -18,7 +20,7 @@ class Digital_Modulation():
   RESOLUTION=100 # Number of points in one period of the carrier frequency
 
   # Input data string is expected in binary
-  def __init__(self, modulation_technique, data, fc, rs, fc_offset=0):
+  def __init__(self, modulation_technique, data, fc, rb, fc_offset=0):
     """
     __init__: is the modulation class constructor
 
@@ -32,12 +34,13 @@ class Digital_Modulation():
 
     self.modulation_technique = modulation_technique.upper() # Force uppercase
     self.quadrature = True if self.modulation_technique.find('Q') != -1 else False # Quadrature flag
+    self.differential = True if self.modulation_technique.find('D') != -1 else False # Differential flag
     self.data = list(data)
     self.data_len = len(self.data)
 
     self.fc_offset = fc_offset
     self.fc = fc
-    self.rs = rs
+    self.rb = rb
 
     # Quadrature check
     if self.quadrature == True: self.pair_bits() # Pair bits
@@ -61,28 +64,14 @@ class Digital_Modulation():
     the class for generating the sine waves and plotting the modulated data.
     """
     # Add an extra symbol period for the initialization period for differential encoding
-    symbols = self.data_len + 1 if self.quadrature == True else self.data_len
-    self.cycles_per_symbol = self.fc/self.rs
-    stop = self.cycles_per_symbol*(1/self.fc)*symbols
+    self.symbols = self.data_len + 1 if self.differential == True else self.data_len
+    self.cycles_per_bit = self.fc/self.rb
+    # When using quadrature, the number of cycles per symbol is double the number of
+    # cycles per bit (i.e. symbol_rate = bit_rate/2)
+    self.cycles_per_symbol = self.cycles_per_bit * 2 if self.quadrature == 1 else self.cycles_per_bit
+    stop = self.cycles_per_symbol*(1/self.fc)*self.symbols
     step = (1/self.fc) / self.RESOLUTION
     self.x = np.arange(0, stop, step)
-
-  # Time stretch base band signal
-  def setup_base_band(self, fill_values):
-    """
-    setup_base_band: stretches the data or phase values (based on the fill_values)
-    so they match with the symbol/bit periods and can easily be converted to a sine
-    wave.
-
-    :param fill_values: values to be stretched to match the symbol periods
-    """
-
-    self.base_band = []
-    for data in fill_values:
-      modulated_bit =  np.full(int(self.cycles_per_symbol*self.RESOLUTION), fill_value=int(data)) # Stretch for one symbol period
-      self.base_band = np.append(self.base_band, modulated_bit)
-
-    self.base_band_len = len(self.base_band)
 
   def pair_bits(self):
     """
@@ -106,10 +95,10 @@ class Digital_Modulation():
     quadrature and binary phase shift keying.
     Quadrature:
       Data  | Phase offset relative to carrier phase
-       11   |  +45 deg
-       10   |  +135 deg
-       00   |  +225 deg
-       01   |  +315 deg
+       11   |  +0   deg
+       10   |  +90  deg
+       00   |  +180 deg
+       01   |  +270 deg
     Binary:
       Data  | Phase offset relative to carrier phase
        1    |  +0 deg
@@ -118,14 +107,16 @@ class Digital_Modulation():
     self.phase_data = []
     if self.quadrature == True:
       for data in self.data:
-        if data == "11": self.phase_data += [45]
-        elif data == "10": self.phase_data += [135]
-        elif data == "00": self.phase_data += [225]
-        elif data == "01": self.phase_data += [315]
+        if data == "11": self.phase_data += [0]
+        elif data == "10": self.phase_data += [90]
+        elif data == "00": self.phase_data += [180]
+        elif data == "01": self.phase_data += [270]
     else:
       for data in self.data:
         if data == "1": self.phase_data += [0]
         if data == "0": self.phase_data += [180]
+    
+    self.phase_data_len = len(self.phase_data)
 
   def setup_phase_differential(self):
     """
@@ -144,7 +135,7 @@ class Digital_Modulation():
     """
     self.phase_data = []
     if self.quadrature == True: # quartenary encoded
-      self.phase_data += [45] # Initial symbol period phase offset
+      self.phase_data += [0] # Initial symbol phase offset
       for i in range(0, self.data_len, 1):
         previous_symbol_phase = self.phase_data[i]
         if   self.data[i] == "11": self.phase_data += [previous_symbol_phase] # Mod 360 to keep on unit circle
@@ -154,71 +145,77 @@ class Digital_Modulation():
     
     else:
       self.phase_data += [0] # Initial symbol period phase offset
-      for i in range(1, self.data_len, 1):
+      for i in range(0, self.data_len, 1):
         previous_symbol_phase = self.phase_data[i-1]
         if   self.data[i] == "1": self.phase_data += [previous_symbol_phase]
         elif self.data[i] == "0": self.phase_data += [(previous_symbol_phase + 180) % 360]
 
-    self.phase_data_len = self.data_len + 1 # +1 to account for initialization period
+    self.phase_data_len = len(self.phase_data) # +1 to account for initialization period
+
 
   # Amplitude shift keying
   def ask(self):
     """
-    ask: generates the modulated signal using amplitude shift keying. The data stream
-    is stretched so each bit fits one symbol period. The stretched data values are used
-    to control if the carrier signal is one or off for each symbol period.
+    ask: generates the modulated signal using amplitude shift keying. Using data length
+    as an large offset value, j selects the time slice associated with the symbol by 
+    dividing the length of the total samples in the transmission by the data length. 
+    These should be even values if integral multiples of the carrier and data rate are
+    kept. The same technique is used in all the other modulation functions.
     """
-    self.setup_base_band(self.data) # Stretch data 
-
     self.modulated_signal = []
-    for i in range(0, self.base_band_len, 1):
-      # If 1, the carrier freq is one, else it's off
-      self.modulated_signal += [self.base_band[i] * np.sin(2*np.pi*self.fc*self.x[i])]
+    for i in range(0, self.data_len, 1):
+      for j in range(0, len(self.x)//self.data_len, 1):
+        t = self.x[i*(len(self.x)//self.data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [int(self.data[i]) * np.sin(2*np.pi*self.fc*t)]
       
   # Frequency shift keying
   def fsk(self):
     """
-    fsk: generates the modulated signal using frequency shift keying. The data stream
-    is streched so each bit fits one symbol period. The stretched data values are then
-    used to select the frequency offset, 1 -> +fc offset, 0 -> -fc offset. With the
-    offset values the symbol periods calculated, it is added (or subtracted) to the
-    carrier frequency for each time step to generate the modulated signal. Note: this
-    approach really only works when the offset is integer multiples of fc and rs.
+    fsk: generates the modulated signal using frequency shift keying. The data values
+    are then used to select the frequency offset, 1 -> +fc offset, 0 -> -fc offset.
+    With the offset values the symbol periods calculated, it is added (or subtracted)
+    to the carrier frequency for each time step to generate the modulated signal.
+    Note: this approach really only works when the offset is integer multiples of
+    fc and rb.
     """
-    self.setup_base_band(self.data)
-
     self.modulated_signal = []
-    for i in range(self.base_band_len):
-      offset = self.fc_offset if self.base_band[i] == 1 else -self.fc_offset # select the offset
-      self.modulated_signal += [np.sin(2*np.pi*(self.fc + offset)*self.x[i])]
+    for i in range(0, self.data_len, 1):
+      for j in range(0, len(self.x)//self.data_len, 1):
+        offset = self.fc_offset if self.data[i] == "1" else -self.fc_offset # select the offset
+
+        t = self.x[i*(len(self.x)//self.data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [np.sin(2*np.pi*(self.fc+offset)*t)]
 
   # Binary phase shift keying
   def psk(self):
     """
     psk: generates the modulated signal using phase shift keying. For phase shift
-    keying, the phase data is computed first (in degrees), then pased to setup_base_band.
-    These phase values are then used to generate the modulated signal.
+    keying, the phase data is computed first (in degrees), then applied to the sine
+    function to generate the modulated signal.
     """
     self.setup_phase_data()
-    self.setup_base_band(self.phase_data)
     
     self.modulated_signal = []
-    for i in range(0, len(self.base_band), 1):
-      self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + np.deg2rad(self.base_band[i]))]
+    for i in range(0, self.phase_data_len, 1):
+      for j in range(0, len(self.x)//self.phase_data_len, 1):
+        t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
   # Quaternary phase shift keying  
   def qpsk(self):
     """
     qpsk: generates the modulated signal using quadrature phase shift keying. For qpsk, the
-    paired data bits are mapped to the appropriate phases, then stretched to fit each symbol
-    period. These phase values are then used to generate the modulated signal.
+    paired data bits are mapped to the appropriate phases. These phase values are then used
+    to generate the modulated signal.
     """
     self.setup_phase_data()
-    self.setup_base_band(self.phase_data)
-    
+
     self.modulated_signal = []
-    for i in range(0, len(self.base_band), 1):
-      self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + np.deg2rad(self.base_band[i]))]
+    for i in range(0, self.phase_data_len, 1):
+      for j in range(0, len(self.x)//self.phase_data_len, 1):
+        t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
+
 
   # Differential phase shift keying
   def dpsk(self):
@@ -228,11 +225,12 @@ class Digital_Modulation():
     bit value. These phase values are then used to generate the modulated signal.
     """
     self.setup_phase_differential()
-    self.setup_base_band(self.phase_data)
-
+    
     self.modulated_signal = []
-    for i in range(0, len(self.base_band), 1):
-      self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + np.deg2rad(self.base_band[i]))]
+    for i in range(0, self.phase_data_len, 1):
+      for j in range(0, len(self.x)//self.phase_data_len, 1):
+        t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
   # Differntial quartenary shift keying
   def dqpsk(self):
@@ -242,30 +240,31 @@ class Digital_Modulation():
     symbol value. These phase values are then used to generate the modulated signal.
     """
     self.setup_phase_differential()
-    self.setup_base_band(self.phase_data)
-
+    
     self.modulated_signal = []
-    for i in range(0, len(self.base_band), 1):
-      self.modulated_signal += [np.sin(2*np.pi*self.fc*self.x[i] + np.deg2rad(self.base_band[i]))]
+    for i in range(0, self.phase_data_len, 1):
+      for j in range(0, len(self.x)//self.phase_data_len, 1):
+        t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
+        self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
   def plot(self):
     """
-    plot: assumes the modulation signal and time axis has been generated.
+    plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
+    integral multiplies of each other, you will get mismatched shape errors in the plot function.
     """
-    symbols = self.data_len + 1 if self.quadrature == True else self.data_len
-    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rs={self.rs}kHz")
+    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rb={self.rb}kHz")
     plt.ylabel("Amplitude (Volts)")
     plt.xlabel("Time(s)")
     plt.plot(self.x, self.modulated_signal)
-    for i in range(symbols + 1): # Vertial lines at the edge of each symbol period
-      plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.fc/self.rs), ls='--') # x[1] is the size of one time step assuming x[0] equals 0
+    for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
+      plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
     plt.show()
     plt.clf()
 
 
 #------------------------Debugging------------------------
 def main():
-  mod = Digital_Modulation(modulation_technique="dqpsk", data="1100", fc=150E3, rs=25E3, fc_offset=50E3)
+  mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
   mod.plot()
 
 if __name__ == "__main__": main()
