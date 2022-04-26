@@ -189,10 +189,10 @@ class Digital_Modulation():
     self.modulated_signal = []
     for i in range(0, self.data_len, 1):
       for j in range(0, len(self.x)//self.data_len, 1):
-        offset = self.fc_offset if self.data[i] == "1" else -self.fc_offset # select the offset
+        fc_offset = self.fc_offset if self.data[i] == "1" else -self.fc_offset # select the offset
 
         t = self.x[i*(len(self.x)//self.data_len)+j] # Map i and j to correct time slice in x
-        self.modulated_signal += [np.sin(2*np.pi*(self.fc+offset)*t)]
+        self.modulated_signal += [np.sin(2*np.pi*(self.fc + fc_offset)*t)]
 
   # Binary phase shift keying
   def psk(self):
@@ -260,7 +260,8 @@ class Digital_Modulation():
     plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
     integral multiplies of each other, you will get mismatched shape errors in the plot function.
     """
-    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rb={self.rb}kHz")
+    data_rate = f"rs={self.rs/2}" if self.quadrature == True else f"rb={self.rb}" # Formate data rate to symbols/second for quadrature
+    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}Hz, {data_rate}Hz")
     plt.ylabel("Amplitude (Volts)")
     plt.xlabel("Time(s)")
     plt.plot(self.x, self.modulated_signal)
@@ -278,6 +279,7 @@ def main():
   #mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
 
   mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
+
   mod.plot()
 
 
