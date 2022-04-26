@@ -5,7 +5,6 @@
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
-import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import *
@@ -28,7 +27,6 @@ class Digital_Modulation():
   """
   RESOLUTION=100 # Number of points in one period of the carrier frequency
 
-  # Input data string is expected in binary
   def __init__(self, modulation_technique, data, fc, rb, fc_offset=0):
     """
     __init__: is the modulation class constructor
@@ -161,8 +159,6 @@ class Digital_Modulation():
 
     self.phase_data_len = len(self.phase_data) # +1 to account for initialization period
 
-
-  # Amplitude shift keying
   def ask(self):
     """
     ask: generates the modulated signal using amplitude shift keying. Using data length
@@ -176,8 +172,7 @@ class Digital_Modulation():
       for j in range(0, len(self.x)//self.data_len, 1):
         t = self.x[i*(len(self.x)//self.data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [int(self.data[i]) * np.sin(2*np.pi*self.fc*t)]
-      
-  # Frequency shift keying
+  
   def fsk(self):
     """
     fsk: generates the modulated signal using frequency shift keying. The data values
@@ -195,7 +190,6 @@ class Digital_Modulation():
         t = self.x[i*(len(self.x)//self.data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*(self.fc+offset)*t)]
 
-  # Binary phase shift keying
   def psk(self):
     """
     psk: generates the modulated signal using phase shift keying. For phase shift
@@ -210,7 +204,6 @@ class Digital_Modulation():
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
-  # Quaternary phase shift keying  
   def qpsk(self):
     """
     qpsk: generates the modulated signal using quadrature phase shift keying. For qpsk, the
@@ -225,8 +218,6 @@ class Digital_Modulation():
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
-
-  # Differential phase shift keying
   def dpsk(self):
     """
     dpsk: generates the modulated signal using differential phase shift keying. For dpsk, the
@@ -241,7 +232,6 @@ class Digital_Modulation():
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
 
-  # Differntial quartenary shift keying
   def dqpsk(self):
     """
     dqpsk: generates the modulated signal using differential quadrature phase shift keying. The
@@ -255,23 +245,6 @@ class Digital_Modulation():
       for j in range(0, len(self.x)//self.phase_data_len, 1):
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
-        
-  def plot(self):
-    """
-    plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
-    integral multiplies of each other, you will get mismatched shape errors in the plot function.
-    """
-    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rb={self.rb}kHz")
-    plt.ylabel("Amplitude (Volts)")
-    plt.xlabel("Time(s)")
-    plt.plot(self.x, self.modulated_signal)
-    for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
-      plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
-    plt.show()
-    plt.clf()
-
-def show():
-	if __name__ == "__main__": main()
 
   def plot(self):
     """
@@ -285,7 +258,7 @@ def show():
     else:
       data_rate = f"Bit Rate={eng_formatter_freq.format_eng(self.rb)}"
       
-    fig = plt.figure()
+    fig = plt.figure(1)
     ax = fig.add_subplot(111)
     ax.plot(self.x, self.modulated_signal)
 
@@ -303,11 +276,12 @@ def show():
 
 #------------------------Debugging------------------------
 def main():
-  #mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
-
   mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
   mod.plot()
 
+
+def show():
+	if __name__ == "__main__": main()
 
 #Data
 Label(window, text="Data Sequence", bg="black", fg="white", font="none 12 bold") .grid(row=0,column=0,sticky =W)
