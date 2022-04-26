@@ -1,23 +1,24 @@
 #!/usr/bin/env python3
 #----------------------------------------------------------------------------
-# Created By  : James Starks & inioluwa obisakin
+# Created By  : James Starks & Inioluwa Obisakin
 # Created Date: 4/11
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
+import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import *
 
+from matplotlib.ticker import EngFormatter 
 # ---------------------------------------------------------------------------
-
-
 window = Tk()
 window.title("WIRELESS PROJECT")
 window.configure(background="black")
 #window.geometry("170x230")
 #window.maxsize(170,230)
 #window.minsize(170,230)
+# ---------------------------------------------------------------------------
 
 class Digital_Modulation():
   """
@@ -254,7 +255,7 @@ class Digital_Modulation():
       for j in range(0, len(self.x)//self.phase_data_len, 1):
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
-
+        
   def plot(self):
     """
     plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
@@ -272,6 +273,33 @@ class Digital_Modulation():
 def show():
 	if __name__ == "__main__": main()
 
+  def plot(self):
+    """
+    plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
+    integral multiplies of each other, you will get mismatched shape errors in the plot function.
+    """
+     # Format data rate to symbols/second for quadrature
+    eng_formatter_freq = EngFormatter(unit="Hz") # Engineering notation for Hz
+    if self.quadrature == True:
+      data_rate = f"Symbol Rate={eng_formatter_freq.format_eng(self.rb/2)}"
+    else:
+      data_rate = f"Bit Rate={eng_formatter_freq.format_eng(self.rb)}"
+      
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(self.x, self.modulated_signal)
+
+    eng_formatter_time = EngFormatter(unit="s") # Set engineering notation formatter for time
+    fig.get_axes()[0].xaxis.set_major_formatter(eng_formatter_time)
+
+    eng_formatter_amp = EngFormatter(unit="V") # Set engineering notation formatter for time
+    fig.get_axes()[0].yaxis.set_major_formatter(eng_formatter_amp)
+
+    plt.title(f"{self.modulation_technique} Modulation, Carrier Freq={eng_formatter_freq.format_eng(self.fc)}Hz, {data_rate}Hz")
+    for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
+      plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
+    plt.show()
+    plt.clf()
 
 #------------------------Debugging------------------------
 def main():
@@ -323,6 +351,5 @@ clicked.set( "ASK" )
 drop = OptionMenu( window , clicked , *options )
 drop.grid(row=2,column=0, sticky=W)
 #drop.pack()
-
 
 window.mainloop()
