@@ -271,6 +271,8 @@ class Digital_Modulation():
     plt.clf()
 #dsfs
 
+
+#ds
 def show():
 	if __name__ == "__main__": main()
 
@@ -281,7 +283,10 @@ def main():
 
   mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
 
+
+
   mod.plot()
+
 
 
 #Data
@@ -314,6 +319,7 @@ options = [
 	"DPSK",
 	"QPSK",
 	"DQPSK"
+  
   ]
 
 # datatype of menu text
