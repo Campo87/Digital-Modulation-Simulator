@@ -15,9 +15,9 @@ from tkinter import *
 window = Tk()
 window.title("WIRELESS PROJECT")
 window.configure(background="black")
-window.geometry("170x230")
-window.maxsize(170,230)
-window.minsize(170,230)
+#window.geometry("170x230")
+#window.maxsize(170,230)
+#window.minsize(170,230)
 
 class Digital_Modulation():
   """
