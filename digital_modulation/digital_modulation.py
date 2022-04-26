@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 #----------------------------------------------------------------------------
-# Created By  : James Starks
+# Created By  : James Starks & inioluwa obisakin
 # Created Date: 4/11
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
+from tkinter import *
+
 # ---------------------------------------------------------------------------
+
+
+window = Tk()
+window.title("WIRELESS PROJECT")
+window.configure(background="black")
+window.geometry("170x230")
+window.maxsize(170,230)
+window.minsize(170,230)
 
 class Digital_Modulation():
   """
@@ -259,10 +269,60 @@ class Digital_Modulation():
     plt.show()
     plt.clf()
 
+def show():
+	if __name__ == "__main__": main()
+
 
 #------------------------Debugging------------------------
 def main():
-  mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
+  #mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
+
+  mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
   mod.plot()
 
-if __name__ == "__main__": main()
+
+#Data
+Label(window, text="Data Sequence", bg="black", fg="white", font="none 12 bold") .grid(row=0,column=0,sticky =W)
+textentryDS = Entry(window, width=20, bg="white")
+textentryDS.grid(row=0, column=1, sticky=W)
+
+#fc
+Label(window, text="Carrier Frequency", bg="black", fg="white", font="none 12 bold") .grid(row=0,column=3,sticky =W)
+textentryFC = Entry(window, width=20, bg="white")
+textentryFC.grid(row=0, column=4, sticky=W)
+
+#Bit Rate
+Label(window, text="Bit Rate", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=0,sticky =W)
+textentryBR = Entry(window, width=20, bg="white")
+textentryBR.grid(row=1, column=1, sticky=W)
+
+#Fr
+Label(window, text="Frequency Change", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=3,sticky =W)
+textentryFR = Entry(window, width=20, bg="white")
+textentryFR.grid(row=1, column=4, sticky=W)
+
+button = Button( window , text = "Modulation" , command =show).grid(row=3, column=2, sticky=W)
+
+# Dropdown menu options
+options = [
+	"ASK",
+	"FSK",
+	"PSK",
+	"DPSK",
+	"QPSK",
+	"DQPSK"
+  ]
+
+# datatype of menu text
+clicked = StringVar()
+
+# initial menu text
+clicked.set( "ASK" )
+
+# Create Dropdown menu
+drop = OptionMenu( window , clicked , *options )
+drop.grid(row=2,column=0, sticky=W)
+#drop.pack()
+
+
+window.mainloop()
