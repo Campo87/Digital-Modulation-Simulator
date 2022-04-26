@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #----------------------------------------------------------------------------
-# Created By  : James Starks
+# Created By  : James Starks & Inioluwa Obisakin
 # Created Date: 4/11
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
@@ -8,8 +8,16 @@
 import matplotlib
 import numpy as np
 import matplotlib.pyplot as plt
+from tkinter import *
 
 from matplotlib.ticker import EngFormatter 
+# ---------------------------------------------------------------------------
+window = Tk()
+window.title("WIRELESS PROJECT")
+window.configure(background="black")
+#window.geometry("170x230")
+#window.maxsize(170,230)
+#window.minsize(170,230)
 # ---------------------------------------------------------------------------
 
 class Digital_Modulation():
@@ -247,6 +255,23 @@ class Digital_Modulation():
       for j in range(0, len(self.x)//self.phase_data_len, 1):
         t = self.x[i*(len(self.x)//self.phase_data_len)+j] # Map i and j to correct time slice in x
         self.modulated_signal += [np.sin(2*np.pi*self.fc*t + np.deg2rad(self.phase_data[i]))]
+        
+  def plot(self):
+    """
+    plot: assumes the modulation signal and time axis has been generated. If rb and fc aren't
+    integral multiplies of each other, you will get mismatched shape errors in the plot function.
+    """
+    plt.title(f"{self.modulation_technique} Modulation, fc={self.fc}kHz, rb={self.rb}kHz")
+    plt.ylabel("Amplitude (Volts)")
+    plt.xlabel("Time(s)")
+    plt.plot(self.x, self.modulated_signal)
+    for i in range(self.symbols + 1): # Vertial lines at the edge of each symbol period
+      plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
+    plt.show()
+    plt.clf()
+
+def show():
+	if __name__ == "__main__": main()
 
   def plot(self):
     """
@@ -259,7 +284,7 @@ class Digital_Modulation():
       data_rate = f"Symbol Rate={eng_formatter_freq.format_eng(self.rb/2)}"
     else:
       data_rate = f"Bit Rate={eng_formatter_freq.format_eng(self.rb)}"
-
+      
     fig = plt.figure()
     ax = fig.add_subplot(111)
     ax.plot(self.x, self.modulated_signal)
@@ -276,10 +301,55 @@ class Digital_Modulation():
     plt.show()
     plt.clf()
 
-
 #------------------------Debugging------------------------
 def main():
-  mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
+  #mod = Digital_Modulation(modulation_technique="dqpsk", data="11010", fc=150E3, rb=50E3, fc_offset=50E3)
+
+  mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
   mod.plot()
 
-if __name__ == "__main__": main()
+
+#Data
+Label(window, text="Data Sequence", bg="black", fg="white", font="none 12 bold") .grid(row=0,column=0,sticky =W)
+textentryDS = Entry(window, width=20, bg="white")
+textentryDS.grid(row=0, column=1, sticky=W)
+
+#fc
+Label(window, text="Carrier Frequency", bg="black", fg="white", font="none 12 bold") .grid(row=0,column=3,sticky =W)
+textentryFC = Entry(window, width=20, bg="white")
+textentryFC.grid(row=0, column=4, sticky=W)
+
+#Bit Rate
+Label(window, text="Bit Rate", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=0,sticky =W)
+textentryBR = Entry(window, width=20, bg="white")
+textentryBR.grid(row=1, column=1, sticky=W)
+
+#Fr
+Label(window, text="Frequency Change", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=3,sticky =W)
+textentryFR = Entry(window, width=20, bg="white")
+textentryFR.grid(row=1, column=4, sticky=W)
+
+button = Button( window , text = "Modulation" , command =show).grid(row=3, column=2, sticky=W)
+
+# Dropdown menu options
+options = [
+	"ASK",
+	"FSK",
+	"PSK",
+	"DPSK",
+	"QPSK",
+	"DQPSK"
+  ]
+
+# datatype of menu text
+clicked = StringVar()
+
+# initial menu text
+clicked.set( "ASK" )
+
+# Create Dropdown menu
+drop = OptionMenu( window , clicked , *options )
+drop.grid(row=2,column=0, sticky=W)
+#drop.pack()
+
+window.mainloop()
