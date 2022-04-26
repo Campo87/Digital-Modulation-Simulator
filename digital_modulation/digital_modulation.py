@@ -269,6 +269,7 @@ class Digital_Modulation():
       plt.axvline(x=i*(self.x[1]*self.RESOLUTION*self.cycles_per_symbol), color='grey', ls='--', alpha=0.5) # x[1] is the size of one time step assuming x[0] is 0
     plt.show()
     plt.clf()
+#dsfs
 
 def show():
 	if __name__ == "__main__": main()
@@ -324,6 +325,7 @@ clicked.set( "ASK" )
 # Create Dropdown menu
 drop = OptionMenu( window , clicked , *options )
 drop.grid(row=2,column=0, sticky=W)
+
 #drop.pack()
 
 
