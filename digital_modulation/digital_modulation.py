@@ -5,6 +5,7 @@
 # ---------------------------------------------------------------------------
 """ Built for EE5374 Final Course Project """
 # ---------------------------------------------------------------------------
+from email.policy import default
 import numpy as np
 import matplotlib.pyplot as plt
 from tkinter import *
@@ -276,7 +277,7 @@ class Digital_Modulation():
 
 #------------------------Debugging------------------------
 def main():
-  mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=int(textentryFC.get()), rb=int(textentryBR.get()), fc_offset=int(textentryFR.get()))
+  mod = Digital_Modulation(modulation_technique=clicked.get(), data=textentryDS.get(), fc=float(textentryFC.get()), rb=float(textentryBR.get()), fc_offset=float(textentryFR.get()))
   mod.plot()
 
 
@@ -299,9 +300,10 @@ textentryBR = Entry(window, width=20, bg="white")
 textentryBR.grid(row=1, column=1, sticky=W)
 
 #Fr
-Label(window, text="Frequency Change", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=3,sticky =W)
+Label(window, text="Frequency Offset", bg="black", fg="white", font="none 12 bold") .grid(row=1,column=3,sticky =W)
 textentryFR = Entry(window, width=20, bg="white")
 textentryFR.grid(row=1, column=4, sticky=W)
+textentryFR.insert(0, "0")
 
 button = Button( window , text = "Modulation" , command =show).grid(row=3, column=2, sticky=W)
 
