@@ -48,6 +48,7 @@ class Digital_Modulation():
 
     self.fc_offset = fc_offset
     self.fc = fc
+	
     self.rb = rb
 
     # Quadrature check
