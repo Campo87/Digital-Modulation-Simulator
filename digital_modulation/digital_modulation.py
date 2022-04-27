@@ -154,10 +154,10 @@ class Digital_Modulation():
     else:
       self.phase_data += [0] # Initial symbol period phase offset
       for i in range(0, self.data_len, 1):
-        previous_symbol_phase = self.phase_data[i-1]
+        previous_symbol_phase = self.phase_data[i]
         if   self.data[i] == "1": self.phase_data += [previous_symbol_phase]
         elif self.data[i] == "0": self.phase_data += [(previous_symbol_phase + 180) % 360]
-
+    
     self.phase_data_len = len(self.phase_data) # +1 to account for initialization period
 
   def ask(self):
