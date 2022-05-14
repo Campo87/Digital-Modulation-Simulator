@@ -37,9 +37,11 @@ For all plots:
 3. Bit Rate = 50kbps
 4. Frequency Offset = 50kHz (for FSK)
 
-![ASK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/ask.png)
-![FSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/fsk.png)
-![PSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/psk.png)
-![QPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/qpsk.png)
-![DPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/dpsk.png)
-![DQPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/dqpsk.png)
+![ASK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/ask.png) *
+![FSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/fsk.png) *
+![PSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/psk.png) *
+![QPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/qpsk.png) **
+![DPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/dpsk.png) *
+![DQPSK](https://github.com/Campo87/Digital-Modulation-Simulator/blob/main/preview/dqpsk.png) **  
+*bps = bits/sec  
+**sps = symbols/sec
