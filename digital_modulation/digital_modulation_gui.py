@@ -9,7 +9,7 @@ import digital_modulation.digital_modulation as dm
 
 # ---------------------------------------------------------------------------
 window = tk.Tk()
-window.title("Simulation of Digital Modulation Techniques")
+window.title("Digital Modulation Simulator")
 window.configure(background="black")
 #window.geometry("170x230")
 #window.maxsize(170,230)
